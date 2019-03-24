@@ -9,11 +9,11 @@ phases:
   build:
     commands:
       - yarn test
-      - aws cloudformation package --template-file template.yaml --output-template-file cf-output.yaml --s3-bucket codebuild-bucket-4
+      - aws cloudformation package --template-file template.yaml --output-template-file cf-template.yaml --s3-bucket codebuild-bucket-4
 
 artifacts:
   files:
-    - cf-output.yaml
+    - cf-template.yaml
 
 
 

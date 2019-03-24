@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description:  Serverless DevOpsSec by Mahdi Azarboon
+
+Globals:
+    Function:
+        Timeout: 30
+        Runtime: nodejs8.10        
+        Environment:
+            Variables:
+                MY_TABLE: devopssec-table
+
+Resources:
+    readItem:
+        Type: AWS::Serverless::Function
+        Properties:
+            CodeUri: ./
+            Handler: handler.readItem
+            Policies:
+            # using Policy Template
+              - DynamoDBReadPolicy:
+                  TableName: !Ref MySimpleTable
+            Events:
+                HttpEventDb:
+                    Type: Api
+                    Properties:
+                        Path: /read_item
+                        Method: get
+
+    createItem:
+        Type: AWS::Serverless::Function
+        Properties:
+            CodeUri: ./
+            Handler: handler.createItem       
+            Policies:
+            # granting granual and minimal permissions  
+                - Statement:
+                    - Effect: "Allow"
+                      Action:
+                        - "dynamodb:PutItem"
+                        - "dynamodb:UpdateItem"
+                      Resource: !GetAtt MySimpleTable.Arn  
+                    - Effect: "Allow"
+                      Action: 
+                        - "logs:CreateLogGroup"
+                        - "logs:CreateLogStream"
+                        - "logs:PutLogEvents"
+            # also, PutLogEvents and CreateLogStream can be applied to a specific resource (=log-group)
+                      Resource: "*" 
+            Events:
+                HttpEventDb:
+                    Type: Api
+                    Properties:
+                        Path: /create_item
+                        Method: post
+
+    MySimpleTable:
+        Type: AWS::Serverless::SimpleTable
+        Properties:
+          TableName: devopssec-table
+          PrimaryKey:
+            Name: id
+            Type: String
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+          SSESpecification:
+            SSEEnabled: true
+
+
+Outputs:
+    readItemApi:
+      Description: "API Gateway endpoint URL for Prod stage for readItem function"
+      Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/read_item/"
+
+    createItemApi:
+      Description: "API Gateway endpoint URL for Prod stage for createItem function"
+      Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/create_item/"
+

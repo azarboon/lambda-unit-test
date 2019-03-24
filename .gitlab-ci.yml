@@ -1,0 +1,46 @@
+# order of stages matters
+stages:
+  - build
+  - unit_test
+  - deploy
+
+build_job:
+  stage: build
+  # Pipeline runs this job using following Docker image
+  image: node:8
+  # during build stage, following scripts will be run
+  script:
+    - yarn
+  # artifacts makes the Gitlab to transfer specified directories to subsequenst stages
+  artifacts:
+    paths:
+      - node_modules
+    expire_in: 4 weeks
+
+# unit_test stage has access to artifacts which have been specified in previous stages (i.e. node_modules)
+unit_test_job:
+  image: node:8
+  stage: unit_test
+  script:
+    - yarn test
+
+deploy_job:
+  stage: deploy
+  # runs this job once the user has manually confirmed it
+  when: manual
+  # runs this job only when specified branches get updated
+  only: 
+    - master
+  script:
+    # installing dependecies during every job in deploy stage
+    - apt-get update && apt-get install -y python python-dev python-pip python-setuptools groff less
+    - pip install awscli --upgrade --user && pip install --user --upgrade aws-sam-cli
+    - export PATH=~/.local/bin:$PATH
+    # specifiying configurations and credentials for CLI tools. Explicitly setting env vars 
+    # during the job, prevents some unexpected issues
+    - export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID && export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+    - export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+    - sam package --template-file template.yaml --s3-bucket $MY_BUCKET_NAME --output-template-file packaged.yaml
+    - sam deploy --template-file packaged.yaml --stack-name sam-devopssec --capabilities CAPABILITY_IAM
+
+

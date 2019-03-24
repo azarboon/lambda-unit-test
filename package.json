@@ -1,0 +1,26 @@
+{
+  "name": "lambda-unit-test",
+  "version": "1.0.0",
+  "description": "This is an example of how unit testing can be done with AWS SAM and CodePipeline",
+  "repository": "",
+  "author": "Mahdi Azarboon",
+  "license": "MIT",
+  "nyc": {
+    "exclude": [
+      "tests/*",
+      "node_modules/*"
+    ]
+  },
+  "dependencies": {
+    "aws-sdk": "^2.358.0",
+    "aws-sdk-mock": "^4.2.0",
+    "nyc": "^13.1.0"
+  },
+  "scripts": {
+    "local": "sam local start-api",
+    "test": "nyc ava tests"
+  },
+  "devDependencies": {
+    "ava": "1.0.0-rc.2"
+  }
+}
